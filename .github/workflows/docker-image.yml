@@ -1,0 +1,30 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Docker login
+      env:
+       DOCKER_USER: asunder123
+       DOCKER_PASSWORD: Docker@123
+      run: |
+         docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
+    
+    - uses: actions/checkout@v3
+    - name: Build the Docker image
+      run: docker build . --file Dockerfile --tag asunder123/synmonitor:latest
+
+    - name: Docker Push 
+      run: |
+           docker images
+           docker push asunder123/synmonitor:latest
