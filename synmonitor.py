@@ -7,10 +7,18 @@ import json
 import decimal
 from decimal import Decimal
 from configparser import ConfigParser
+import matplotlib
 import matplotlib.pyplot as plt
+matplotlib.use('Agg')
 import numpy as np
+import mpld3
+from flask import render_template
+import io
+import os
+from io import BytesIO
+import base64
 
-app = Flask(__name__)
+app = Flask(__name__,template_folder='templates')
 
 c=ConfigParser()
 
@@ -57,27 +65,22 @@ def web():
         print("Type::clist",type(clist))
         data=clist[0]+' '+clist[1]
         print("Data cleansed",data,"Type",type(data))
-        #time.sleep(float(pollperiod))
+        time.sleep(float(pollperiod))
         try:
-         print(float(timeot))   
+         print(Decimal(timeot))   
          resp=requests.get(url,verify=True,timeout=(Decimal(timeot)))
+         print("Success within timeout")
          if resp.status_code==200:
-          print("Success within timeout")
           scode.append(resp.status_code)
-          el.append(resp.elapsed.total_seconds())
          else:
-          scode.append(404)
-          el.append(0)
+          scode.append(408)
+         el.append(resp.elapsed.total_seconds()*1000)
         except:
-         scode.append(404)
-         el.append(0)
-         print("Status list",scode)
-         print("Elapsed time list",el)
          print("Read Timeout")
 
         if i>int(hits):
           break  
-    print("Times elapsed",el,'\t',scode)
+    #print("Times elapsed",el,'\t',scode)
 
     def events(): 
        for k in range(len(el)):
@@ -87,33 +90,44 @@ def web():
          #yield str(d[k].split("::")[1])
           yield str(datetime.now().strftime("%H:%M:%S.%f")[:-3])
           yield '\t'
-          #yield str(d[k].split("::")[1])
-          #yield '\t'
-          #yield str(scode[k])
-          #yield '\t'
-          #resp=requests.get(url,verify=True)
-          #resp=requests.get(url,verify=True)
-          #el=resp.elapsed.total_seconds()
-          #for m in range(k):
-          if el[k]<float(timeot) and scode[k]==200:
+          if el[k]<(1000*float(timeot)) and scode[k]==200:
            print("Entries within timeout")
            yield str(scode[k])
            yield '\t'
-           yield str(1000*el[k])
+           yield str(el[k])
            yield 'ms'
           else:
            print("Entries after timeout")
-           yield str(408)
+           scode[k]=408
+           yield str(scode[k])
            yield '\t'
-           yield '--'
-           #yield 'ms'
+           el[k]=0
+           yield str(el[k])
+           yield 'ms'
           yield '\n'
          #time.sleep(float(pollperiod))
-    print(scode)
-    plt.plot(scode)
-    plt.show()
-    print("Plot executed successfully")
+       print("Status codes",scode)
+       print("Readlatencies",el)
+       plt.plot(np.array(scode))
+       #mpld3.show()
+       plt.savefig('Respcodeplot.png')
+       plt.plot(np.array(el))
+       #mpld3.show()
+       plt.savefig('Latencyplot.png')
+       print("Plot executed successfully")
+    #plt.plot(np.array(el),np.array(scode))
+    #plt.savefig('statuscode-resptime.png')
     return Response(events(),content_type='application/json')
     #plt(np.array(d[0]),np.array(scode))
 
+@app.route("/plotresp")
+def plotresp():
+ plot_url1=  base64.b64encode(open("Respcodeplot.png","rb").read())
+ plot_resp= plot_url1.decode('utf-8')
+ return render_template('plotresp.html',plot_url1=plot_resp)
 
+@app.route("/plotlat")
+def plotlat():
+ plot_url2=  base64.b64encode(open("Latencyplot.png","rb").read())
+ plot_lat= plot_url2.decode('utf-8')
+ return render_template('plotlat.html',plot_url2=plot_lat)
