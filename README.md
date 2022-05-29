@@ -1,3 +1,3 @@
-# End points taking beyond 1s to respond work succesfully
+# Polling period beyond   1s works succesfully
 DNS Resolution customization can be checked
 
