@@ -102,11 +102,9 @@ def web():
            yield str(el[k])
            yield 'ms'
            yield '\t'
-           yield str(clength[0]['Age'])
-           yield '\t'
-           f=len([o for o in scode if o==408])
-           yd=((len(scode)-f)/len(scode))*100
-           perf.append(yd)
+           f=len([o for o in scode[0:k] if o==408])
+           yd=(f/len(scode))*100
+           perf.append(100-yd)
            yield str(perf[k])
            yield '\t'
           yield '\n'
@@ -138,6 +136,17 @@ def web():
          plt.clf()
          plt.plot(np.arange(1,len(el)+1),np.array(el))
          plt.savefig('Latencyplot'+str(k+1)+'.png')
+       if os.path.exists('Perfplot'+str(k)+'.png'):
+         os.remove('Perfplot'+str(k+1)+'.png')
+         print("Perf plot file updation needed...")
+         plt.clf()
+         plt.plot(np.arange(1,len(perf)+1),np.array(perf))
+         plt.savefig('Perfplot'+str(k+1)+'.png')
+       else:
+         print("Perf plot file not updated")
+         plt.clf()
+         plt.plot(np.arange(1,len(perf)+1),np.array(perf))
+         plt.savefig('Perfplot'+str(k+1)+'.png')
  
     return Response(events(),content_type='application/json')
 
@@ -155,3 +164,10 @@ def plotlat():
  plot_url2=  base64.b64encode(open("Latencyplot"+hits+".png","rb").read())
  plot_lat= plot_url2.decode('utf-8')
  return render_template('plotlat.html',plot_url2=plot_lat)
+
+@app.route("/syn/plotperf")
+def plotperf():
+ requests.get('http://localhost:5000/syn')
+ plot_url3=  base64.b64encode(open("Perfplot"+hits+".png","rb").read())
+ plot_perf= plot_url3.decode('utf-8')
+ return render_template('plotperf.html',plot_url3=plot_perf)
