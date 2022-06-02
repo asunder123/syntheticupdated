@@ -46,12 +46,6 @@ print(float(timeot))
 @app.route("/syn")
 def web():
     now = datetime.now()
-    #current_time=now.strftime("%H:%M:%S")
-    #resp=requests.get(url,verify=True,timeout=float(timeot))
-    #print("Latency",resp.elapsed.total_seconds())
-    #var=resp.text
-    #status=resp.status_code
-    #print("Response:::",var)
     i=0
     d=list()
     el=list()
@@ -81,16 +75,13 @@ def web():
          print("Read Timeout")
         if i>int(hits):
           break  
-    #print("Times elapsed",el,'\t',scode)
     
     
     def events():
        perf=list() 
        for k in range(len(el)):
-        #if el<float(pollperiod):
           yield str(d[k].split("::")[0])
           yield '\t'
-         #yield str(d[k].split("::")[1])
           yield str(datetime.now().strftime("%H:%M:%S.%f")[:-3])
           yield '\t'
           if el[k]<(1000*float(timeot)) and scode[k]==200:
@@ -129,8 +120,6 @@ def web():
          print("Resp plot File updation needed...")
          plt.clf()
          plt.plot(np.arange(1,len(scode)+1),np.array(scode))
-       #mpld3.show()
-         
          plt.savefig('Respcodeplot'+str(k+1)+'.png')
        else:
           print("Resp plot file not updated")
@@ -143,8 +132,6 @@ def web():
          print("Latency plot file updation needed...")
          plt.clf()
          plt.plot(np.arange(1,len(el)+1),np.array(el))
-
-         
          plt.savefig('Latencyplot'+str(k+1)+'.png')
        else:
          print("Latency plot file not updated")
