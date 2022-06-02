@@ -99,6 +99,9 @@ def web():
            yield '\t'
            yield str(el[k])
            yield 'ms'
+           perf.append(100)
+           yield '\t'
+           yield str(perf[k])
           else:
            print("Entries after timeout")
            scode[k]=408
@@ -113,7 +116,7 @@ def web():
            f=len([o for o in scode if o==408])
            yd=((len(scode)-f)/len(scode))*100
            perf.append(yd)
-           yield str(yd)
+           yield str(perf[k])
            yield '\t'
           yield '\n'
          #time.sleep(float(pollperiod))
