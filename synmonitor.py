@@ -1,9 +1,7 @@
-import sys
 from flask import Flask,Response
 from datetime import datetime
 import requests
 import time
-import json 
 import decimal
 from decimal import Decimal
 from configparser import ConfigParser
@@ -17,6 +15,7 @@ import io
 import os
 from io import BytesIO
 import base64
+import re 
 
 app = Flask(__name__,template_folder='templates')
 
@@ -68,20 +67,20 @@ def web():
         time.sleep(float(pollperiod))
         try:
          print(Decimal(timeot))   
-         resp=requests.get(url,verify=True,timeout=(Decimal(timeot)))
+         resp=requests.get(url,verify=True,timeout=float(timeot))
          print("Success within timeout")
-         if resp.status_code==200:
+         if resp.ok==True:
           scode.append(resp.status_code)
          else:
-          scode.append(408)
+          scode.append(resp.status_code)
          el.append(resp.elapsed.total_seconds()*1000)
         except:
          print("Read Timeout")
-
         if i>int(hits):
           break  
     #print("Times elapsed",el,'\t',scode)
-
+    
+    
     def events(): 
        for k in range(len(el)):
         #if el<float(pollperiod):
@@ -108,26 +107,59 @@ def web():
          #time.sleep(float(pollperiod))
        print("Status codes",scode)
        print("Readlatencies",el)
-       plt.plot(np.array(scode))
+       if os.path.exists('Respcodeplot'+str(k+1)+'.png'):
+         os.remove('Respcodeplot'+str(k+1)+'.png')
+         print("Resp plot File removed")
+         print("Resp plot File updation needed...")
+         plt.clf()
+         plt.plot(np.arange(1,len(scode)+1),np.array(scode))
        #mpld3.show()
-       plt.savefig('Respcodeplot.png')
-       plt.plot(np.array(el))
+         
+         plt.savefig('Respcodeplot'+str(k+1)+'.png')
+       else:
+          print("Resp plot file not updated")
+          #os.remove('Respcodeplot'+str(k+1)+'.png')
+          plt.clf()
+          plt.plot(np.arange(1,len(scode)+1),np.array(scode))
+          plt.savefig('Respcodeplot'+str(k+1)+'.png')
+          print('Refreshed plot response')
+          #pass
+       if os.path.exists('Latencyplot'+str(k)+'.png'):
+         os.remove('Latencyplot'+str(k+1)+'.png')
+       #else:
+         #pass
+         print("Latency plot file updation needed...")
+         plt.clf()
+         plt.plot(np.arange(1,len(el)+1),np.array(el))
        #mpld3.show()
-       plt.savefig('Latencyplot.png')
-       print("Plot executed successfully")
+         
+         plt.savefig('Latencyplot'+str(k+1)+'.png')
+       else:
+         print("Latency plot file not updated")
+         #os.remove('Latencyplot'+str(k+1)+'.png')
+         plt.clf()
+         plt.plot(np.arange(1,len(el)+1),np.array(el))
+         plt.savefig('Latencyplot'+str(k+1)+'.png')
+         #pass
     #plt.plot(np.array(el),np.array(scode))
     #plt.savefig('statuscode-resptime.png')
     return Response(events(),content_type='application/json')
     #plt(np.array(d[0]),np.array(scode))
 
-@app.route("/plotresp")
+@app.route("/syn/plotresp")
 def plotresp():
- plot_url1=  base64.b64encode(open("Respcodeplot.png","rb").read())
+ #if os.path.exists('Respcodeplot'+hits+'.png'):
+   #os.remove('Respcodeplot'+hits+'.png')
+ requests.get('http://localhost:5000/syn')
+ plot_url1=  base64.b64encode(open("Respcodeplot"+hits+".png","rb").read())
  plot_resp= plot_url1.decode('utf-8')
  return render_template('plotresp.html',plot_url1=plot_resp)
 
-@app.route("/plotlat")
+@app.route("/syn/plotlat")
 def plotlat():
- plot_url2=  base64.b64encode(open("Latencyplot.png","rb").read())
+ #if os.path.exists('Latemcyplot'+hits+'.png'):
+   #os.remove('Latencyplot'+hits+'.png')
+ requests.get('http://localhost:5000/syn')
+ plot_url2=  base64.b64encode(open("Latencyplot"+hits+".png","rb").read())
  plot_lat= plot_url2.decode('utf-8')
  return render_template('plotlat.html',plot_url2=plot_lat)
