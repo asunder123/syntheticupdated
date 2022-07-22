@@ -1,5 +1,6 @@
 from lib2to3.pytree import *
 from typing import IO
+from urllib import response
 from urllib.request import Request
 from wsgiref.util import request_uri
 from datetime import datetime
@@ -14,7 +15,7 @@ matplotlib.use('Agg')
 from markupsafe import Markup, escape
 import numpy as np
 from flask_wtf import FlaskForm
-from flask import Flask, render_template, request, url_for, flash, redirect
+from flask import Flask, render_template, request, url_for, flash, redirect,Response
 import io
 import os
 from io import BytesIO
@@ -137,7 +138,7 @@ def web():
        print("Readlatencies",el)
        print("CumulativeYield",perf)
        if os.path.exists('Respcodeplot'+str(k+1)+'.png'):
-         os.remove('Respcodeplot'+str(k+1)+'.png')
+         #os.remove('Respcodeplot'+str(k+1)+'.png')
          print("Resp plot File removed")
          print("Resp plot File updation needed...")
          plt.clf()
@@ -150,7 +151,7 @@ def web():
           plt.savefig('Respcodeplot'+str(k+1)+'.png')
           print('Refreshed plot response')
        if os.path.exists('Latencyplot'+str(k)+'.png'):
-         os.remove('Latencyplot'+str(k+1)+'.png')
+         #os.remove('Latencyplot'+str(k+1)+'.png')
          print("Latency plot file updation needed...")
          plt.clf()
          plt.plot(np.arange(1,len(el)+1),np.array(el))
@@ -161,7 +162,7 @@ def web():
          plt.plot(np.arange(1,len(el)+1),np.array(el))
          plt.savefig('Latencyplot'+str(k+1)+'.png')
        if os.path.exists('Perfplot'+str(k)+'.png'):
-         os.remove('Perfplot'+str(k+1)+'.png')
+         #os.remove('Perfplot'+str(k+1)+'.png')
          print("Perf plot file updation needed...")
          plt.clf()
          plt.plot(np.arange(1,len(perf)+1),np.array(perf))
@@ -201,10 +202,19 @@ def plotperf():
 @app.route("/syn/values",methods=["POST","GET"])
 def getform():
  form = SetApp(request.form)
+ config=ConfigParser()
+ config.read('config.ini')
  print(str(str(form.url).split("=")[4][:-1]).strip('\"'))
- print(str(str(form.hits).split("=")[4][:-1]).strip('\"'))
- print(str(str(form.pollperiod).split("=")[4][:-1]).strip('\"'))
 
+ #Update test
+ config['endpoint']['url']=str(str(form.url).split("=")[4][:-1]).strip('\"')
+ config['endpoint']['hits']=str(str(form.hits).split("=")[4][:-1]).strip('\"')
+ config['endpoint']['pollperiod']=str(str(form.pollperiod).split("=")[4][:-1]).strip('\"')
+
+ with open('config.ini', 'w') as configfile:    # save
+    config.write(configfile)
+
+ print("Updated config is",str(str(form.url).split("=")[4][:-1]).strip('\"'),"\n",str(str(form.hits).split("=")[4][:-1]).strip('\"'),"\n",str(str(form.pollperiod).split("=")[4][:-1]).strip('\"'))
  return render_template('setapp.html')
 
 @app.route("/syn/test",methods=["POST","GET"])
