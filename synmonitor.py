@@ -1,4 +1,7 @@
-from flask import Flask,Response
+from lib2to3.pytree import *
+from typing import IO
+from urllib.request import Request
+from wsgiref.util import request_uri
 from datetime import datetime
 import requests
 import time
@@ -8,16 +11,37 @@ from configparser import ConfigParser
 import matplotlib
 import matplotlib.pyplot as plt
 matplotlib.use('Agg')
+from markupsafe import Markup, escape
 import numpy as np
-import mpld3
-from flask import render_template
+from flask_wtf import FlaskForm
+from flask import Flask, render_template, request, url_for, flash, redirect
 import io
 import os
 from io import BytesIO
 import base64
 import re 
+import cgi
+import cgitb
+from flask_bootstrap import Bootstrap
+from wtforms import Form,StringField, SubmitField,validators,TextAreaField
+from wtforms.validators import DataRequired
+import xml.etree.ElementTree as ET
 
+
+
+cgitb.enable()
 app = Flask(__name__,template_folder='templates')
+# Flask-WTF requires an encryption key - the string can be anything
+app.config['SECRET_KEY'] = 'C2HWGVoMGfNTBsrYQg8EcMrdTimkZfAb'
+
+# Flask-Bootstrap requires this line
+Bootstrap(app)
+
+class SetApp(FlaskForm):
+    url = StringField('url', validators=[DataRequired()])
+    hits = StringField('Hits', validators=[DataRequired()])
+    pollperiod = StringField('Pollperiod', validators=[DataRequired()])
+    submit = SubmitField('Submit')
 
 c=ConfigParser()
 
@@ -171,3 +195,29 @@ def plotperf():
  plot_url3=  base64.b64encode(open("Perfplot"+hits+".png","rb").read())
  plot_perf= plot_url3.decode('utf-8')
  return render_template('plotperf.html',plot_url3=plot_perf)
+
+
+
+@app.route("/syn/values",methods=["POST","GET"])
+def getform():
+ form = SetApp(request.form)
+ print(str(str(form.url).split("=")[4][:-1]).strip('\"'))
+ print(str(str(form.hits).split("=")[4][:-1]).strip('\"'))
+ print(str(str(form.pollperiod).split("=")[4][:-1]).strip('\"'))
+
+ return render_template('setapp.html')
+
+@app.route("/syn/test",methods=["POST","GET"])
+def get():
+ request=requests.get("http://localhost:5000/syn/values")
+ return render_template('result.html')
+
+ 
+
+
+
+
+
+
+
+

@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h2>SetApp</h2>
+
+<form method="POST" action="" method="post">
+  <label for="url">url:</label><br>
+  <input type="text" id="url" name="url" value="{{request.form['url']}}"><br>
+  <label for="hits">Hits:</label><br>
+  <input type="text" id="hits" name="hits" value="{{request.form['hits']}}"><br><br>
+  <label for="pollperiod">PollPeriod:</label><br>
+  <input type="text" id="pollperiod" name="pollperiod" value="{{request.form['pollperiod']}}"><br><br>
+  <input type="submit" value="Submit"/>
+</form> 
+
+
+</body>
+</html>
