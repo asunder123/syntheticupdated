@@ -41,7 +41,8 @@ Bootstrap(app)
 class SetApp(FlaskForm):
     url = StringField('url', validators=[DataRequired()])
     hits = StringField('Hits', validators=[DataRequired()])
-    pollperiod = StringField('Pollperiod', validators=[DataRequired()])
+    timeout = StringField('Timeout', validators=[DataRequired()])
+    pollperiod = StringField('Pollperiod', validators=[DataRequired()])    
     submit = SubmitField('Submit')
 
 c=ConfigParser()
@@ -64,9 +65,9 @@ pollperiod = c.get('endpoint','pollperiod')
 print("Configured poll period is....", pollperiod)
 
 #timeout
-timeot = c.get('endpoint','timeout')
-print("Time out configured is ",timeot)
-print(float(timeot))
+timeout = c.get('endpoint','timeout')
+print("Time out configured is ",timeout)
+#print(float(timeout))
 
 @app.route("/syn")
 def web():
@@ -84,10 +85,10 @@ def web():
         print("Type::clist",type(clist))
         data=clist[0]+' '+clist[1]
         print("Data cleansed",data,"Type",type(data))
-        time.sleep(float(pollperiod))
+        time.sleep(Decimal(pollperiod))
         try:
-         print(Decimal(timeot))   
-         resp=requests.get(url,verify=True,timeout=float(timeot))
+         print(Decimal(timeout))   
+         resp=requests.get(url,verify=True,timeout=float(timeout))
          print("Success within timeout")
          if resp.ok==True:
           scode.append(resp.status_code)
@@ -109,7 +110,7 @@ def web():
           yield '\t'
           yield str(datetime.now().strftime("%H:%M:%S.%f")[:-3])
           yield '\t'
-          if el[k]<(1000*float(timeot)) and scode[k]==200:
+          if el[k]<(1000*float(timeout)) and scode[k]==200:
            print("Entries within timeout")
            yield str(scode[k])
            yield '\t'
@@ -138,7 +139,7 @@ def web():
        print("Readlatencies",el)
        print("CumulativeYield",perf)
        if os.path.exists('Respcodeplot'+str(k+1)+'.png'):
-         #os.remove('Respcodeplot'+str(k+1)+'.png')
+         os.remove('Respcodeplot'+str(k+1)+'.png')
          print("Resp plot File removed")
          print("Resp plot File updation needed...")
          plt.clf()
@@ -151,7 +152,7 @@ def web():
           plt.savefig('Respcodeplot'+str(k+1)+'.png')
           print('Refreshed plot response')
        if os.path.exists('Latencyplot'+str(k)+'.png'):
-         #os.remove('Latencyplot'+str(k+1)+'.png')
+         os.remove('Latencyplot'+str(k+1)+'.png')
          print("Latency plot file updation needed...")
          plt.clf()
          plt.plot(np.arange(1,len(el)+1),np.array(el))
@@ -162,7 +163,7 @@ def web():
          plt.plot(np.arange(1,len(el)+1),np.array(el))
          plt.savefig('Latencyplot'+str(k+1)+'.png')
        if os.path.exists('Perfplot'+str(k)+'.png'):
-         #os.remove('Perfplot'+str(k+1)+'.png')
+         os.remove('Perfplot'+str(k+1)+'.png')
          print("Perf plot file updation needed...")
          plt.clf()
          plt.plot(np.arange(1,len(perf)+1),np.array(perf))
@@ -204,17 +205,18 @@ def getform():
  form = SetApp(request.form)
  config=ConfigParser()
  config.read('config.ini')
- print(str(str(form.url).split("=")[4][:-1]).strip('\"'))
+
 
  #Update test
  config['endpoint']['url']=str(str(form.url).split("=")[4][:-1]).strip('\"')
  config['endpoint']['hits']=str(str(form.hits).split("=")[4][:-1]).strip('\"')
+ config['endpoint']['timeout']=str(str(form.timeout).split("=")[4][:-1]).strip('\"')
  config['endpoint']['pollperiod']=str(str(form.pollperiod).split("=")[4][:-1]).strip('\"')
 
  with open('config.ini', 'w') as configfile:    # save
     config.write(configfile)
 
- print("Updated config is",str(str(form.url).split("=")[4][:-1]).strip('\"'),"\n",str(str(form.hits).split("=")[4][:-1]).strip('\"'),"\n",str(str(form.pollperiod).split("=")[4][:-1]).strip('\"'))
+ print("Updated config is",str(str(form.url).split("=")[4][:-1]).strip('\"'),"\n",str(str(form.hits).split("=")[4][:-1]).strip('\"'),"\n",str(str(form.timeout).split("=")[4][:-1]).strip('\"'),str(str(form.pollperiod).split("=")[4][:-1]).strip('\"'))
  return render_template('setapp.html')
 
 @app.route("/syn/test",methods=["POST","GET"])
